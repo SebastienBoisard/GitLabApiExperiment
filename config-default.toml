@@ -1,0 +1,2 @@
+[connection]
+token = "xxxxxxxxxxxxxxxxx" // Put here the GitLab access token
