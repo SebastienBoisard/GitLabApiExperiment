@@ -50,6 +50,46 @@ type MergeRequests struct {
 	WebURL                   string        `json:"web_url"`
 }
 
+
+func getMergedRequests(gitlabToken string, projectName string) (error, []MergeRequests) {
+
+   projectName = url.QueryEscape(projectName)
+
+   url := fmt.Sprintf("http://www.gitlab.com/api/v3/projects/%s/merge_requests?state=merged&private_token=%s", projectName, gitlabToken)
+
+   // Build the request
+   req, err := http.NewRequest("GET", url, nil)
+   if err != nil {
+      log.Fatal("NewRequest: ", err)
+      return err, nil
+   }
+
+   // Create a HTTP Client for control over HTTP client headers, redirect policy, and other settings.
+   client := &http.Client{}
+
+   // Send an HTTP request and returns an HTTP response
+   resp, err := client.Do(req)
+   if err != nil {
+      log.Fatal("Do: ", err)
+      return err, nil
+   }
+
+   // Defer the closing of the body
+   defer resp.Body.Close()
+
+   // Fill the record with the data from the JSON
+   var record []MergeRequests
+
+   // Use json.Decode for reading streams of JSON data
+   if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
+      log.Println(err)
+      return err, nil
+   }
+
+   return nil, record
+}
+
+
 func main() {
 
 	viper.SetConfigName("config")
@@ -63,40 +103,13 @@ func main() {
 
 	gitlabToken := viper.GetString("connection.token")
 
-	projectName := url.QueryEscape("technomancy/bussard")
+   err, mergedRequests := getMergedRequests(gitlabToken, "technomancy/bussard")
+   if err != nil {
+      log.Println("Error: can't get the merged requests [", err, "]")
+      return      
+   }
 
-	url := fmt.Sprintf("http://www.gitlab.com/api/v3/projects/%s/merge_requests?state=merged&private_token=%s", projectName, gitlabToken)
-
-	// Build the request
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		log.Fatal("NewRequest: ", err)
-		return
-	}
-
-	// Create a HTTP Client for control over HTTP client headers, redirect policy, and other settings.
-	client := &http.Client{}
-
-	// Send an HTTP request and returns an HTTP response
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal("Do: ", err)
-		return
-	}
-
-	// Defer the closing of the body
-	defer resp.Body.Close()
-
-	// Fill the record with the data from the JSON
-	var record []MergeRequests
-
-	// Use json.Decode for reading streams of JSON data
-	if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
-		log.Println(err)
-	}
-
-	for _, r := range record {
-		fmt.Println("Title = ", r.Title)
-	}
-
+   for _, r := range mergedRequests {
+      fmt.Println("merged requests title = ", r.Title)
+   }
 }
