@@ -11,7 +11,7 @@ import (
 )
 
 // Used https://mholt.github.io/json-to-go/
-type MergeRequests struct {
+type MergeRequest struct {
 	ID           int       `json:"id"`
 	Iid          int       `json:"iid"`
 	ProjectID    int       `json:"project_id"`
@@ -51,7 +51,25 @@ type MergeRequests struct {
 }
 
 
-func getMergedRequests(gitlabToken string, projectName string) (error, []MergeRequests) {
+type Branch struct {
+   Name string `json:"name"`
+   Commit struct {
+      ID string `json:"id"`
+      Message string `json:"message"`
+      ParentIds []string `json:"parent_ids"`
+      AuthoredDate time.Time `json:"authored_date"`
+      AuthorName string `json:"author_name"`
+      AuthorEmail string `json:"author_email"`
+      CommittedDate time.Time `json:"committed_date"`
+      CommitterName string `json:"committer_name"`
+      CommitterEmail string `json:"committer_email"`
+   } `json:"commit"`
+   Protected bool `json:"protected"`
+   DevelopersCanPush bool `json:"developers_can_push"`
+   DevelopersCanMerge bool `json:"developers_can_merge"`
+}
+
+func getMergedRequests(gitlabToken string, projectName string) (error, []MergeRequest) {
 
    projectName = url.QueryEscape(projectName)
 
@@ -78,7 +96,7 @@ func getMergedRequests(gitlabToken string, projectName string) (error, []MergeRe
    defer resp.Body.Close()
 
    // Fill the record with the data from the JSON
-   var record []MergeRequests
+   var record []MergeRequest
 
    // Use json.Decode for reading streams of JSON data
    if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
@@ -89,6 +107,43 @@ func getMergedRequests(gitlabToken string, projectName string) (error, []MergeRe
    return nil, record
 }
 
+func getBranches(gitlabToken string, projectName string) (error, []Branch) {
+
+   projectName = url.QueryEscape(projectName)
+
+   url := fmt.Sprintf("http://www.gitlab.com/api/v3/projects/%s/repository/branches?private_token=%s", projectName, gitlabToken)
+
+   // Build the request
+   req, err := http.NewRequest("GET", url, nil)
+   if err != nil {
+      log.Fatal("NewRequest: ", err)
+      return err, nil
+   }
+
+   // Create a HTTP Client for control over HTTP client headers, redirect policy, and other settings.
+   client := &http.Client{}
+
+   // Send an HTTP request and returns an HTTP response
+   resp, err := client.Do(req)
+   if err != nil {
+      log.Fatal("Do: ", err)
+      return err, nil
+   }
+
+   // Defer the closing of the body
+   defer resp.Body.Close()
+
+   // Fill the record with the data from the JSON
+   var record []Branch
+
+   // Use json.Decode for reading streams of JSON data
+   if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
+      log.Println(err)
+      return err, nil
+   }
+
+   return nil, record
+}
 
 func main() {
 
@@ -103,6 +158,7 @@ func main() {
 
 	gitlabToken := viper.GetString("connection.token")
 
+
    err, mergedRequests := getMergedRequests(gitlabToken, "technomancy/bussard")
    if err != nil {
       log.Println("Error: can't get the merged requests [", err, "]")
@@ -111,5 +167,16 @@ func main() {
 
    for _, r := range mergedRequests {
       fmt.Println("merged requests title = ", r.Title)
+   }
+
+
+   err, branches := getBranches(gitlabToken, "gnutls/gnutls")
+   if err != nil {
+      log.Println("Error: can't get the branches [", err, "]")
+      return      
+   }
+
+   for _, r := range branches {
+      fmt.Println("branch name = ", r.Name)
    }
 }
