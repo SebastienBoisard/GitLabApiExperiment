@@ -11,6 +11,7 @@ import (
 )
 
 // Used https://mholt.github.io/json-to-go/
+// MergeRequest contains the Merge Request data
 type MergeRequest struct {
 	ID           int       `json:"id"`
 	Iid          int       `json:"iid"`
@@ -50,7 +51,7 @@ type MergeRequest struct {
 	WebURL                   string        `json:"web_url"`
 }
 
-
+// Branch contains the branch data
 type Branch struct {
    Name string `json:"name"`
    Commit struct {
@@ -69,7 +70,7 @@ type Branch struct {
    DevelopersCanMerge bool `json:"developers_can_merge"`
 }
 
-
+// Commit contains the commit data
 type Commit struct {
    ID string `json:"id"`
    ShortID string `json:"short_id"`
@@ -80,16 +81,22 @@ type Commit struct {
    Message string `json:"message"`
 }
 
+
+/**
+ * getMergedRequests retrieves the Merge Requests that have been already merged.
+ *
+ * Doc: https://docs.gitlab.com/ee/api/merge_requests.html#list-merge-requests
+ */
 func getMergedRequests(gitlabToken string, projectName string) (error, []MergeRequest) {
 
    projectName = url.QueryEscape(projectName)
 
-   url := fmt.Sprintf("http://www.gitlab.com/api/v3/projects/%s/merge_requests?state=opened&private_token=%s", projectName, gitlabToken)
+   url := fmt.Sprintf("http://www.gitlab.com/api/v3/projects/%s/merge_requests?state=merged&private_token=%s", projectName, gitlabToken)
 
    // Build the request
    req, err := http.NewRequest("GET", url, nil)
    if err != nil {
-      log.Fatal("NewRequest: ", err)
+      log.Println("NewRequest: ", err)
       return err, nil
    }
 
@@ -99,7 +106,7 @@ func getMergedRequests(gitlabToken string, projectName string) (error, []MergeRe
    // Send an HTTP request and returns an HTTP response
    resp, err := client.Do(req)
    if err != nil {
-      log.Fatal("Do: ", err)
+      log.Println("Do: ", err)
       return err, nil
    }
 
@@ -107,17 +114,23 @@ func getMergedRequests(gitlabToken string, projectName string) (error, []MergeRe
    defer resp.Body.Close()
 
    // Fill the record with the data from the JSON
-   var record []MergeRequest
+   var mergedRequests []MergeRequest
 
    // Use json.Decode for reading streams of JSON data
-   if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
+   if err := json.NewDecoder(resp.Body).Decode(&mergedRequests); err != nil {
       log.Println(err)
       return err, nil
    }
 
-   return nil, record
+   return nil, mergedRequests
 }
 
+
+/**
+ * getBranches retrieves branches from a project.
+ *
+ * Doc: https://docs.gitlab.com/ee/api/branches.html#list-repository-branches
+ */
 func getBranches(gitlabToken string, projectName string) (error, []Branch) {
 
    projectName = url.QueryEscape(projectName)
@@ -127,7 +140,7 @@ func getBranches(gitlabToken string, projectName string) (error, []Branch) {
    // Build the request
    req, err := http.NewRequest("GET", url, nil)
    if err != nil {
-      log.Fatal("NewRequest: ", err)
+      log.Println("NewRequest: ", err)
       return err, nil
    }
 
@@ -137,7 +150,7 @@ func getBranches(gitlabToken string, projectName string) (error, []Branch) {
    // Send an HTTP request and returns an HTTP response
    resp, err := client.Do(req)
    if err != nil {
-      log.Fatal("Do: ", err)
+      log.Println("Do: ", err)
       return err, nil
    }
 
@@ -145,17 +158,23 @@ func getBranches(gitlabToken string, projectName string) (error, []Branch) {
    defer resp.Body.Close()
 
    // Fill the record with the data from the JSON
-   var record []Branch
+   var branches []Branch
 
    // Use json.Decode for reading streams of JSON data
-   if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
+   if err := json.NewDecoder(resp.Body).Decode(&branches); err != nil {
       log.Println(err)
       return err, nil
    }
 
-   return nil, record
+   return nil, branches
 }
 
+
+/**
+ * getCommits retrieves all the commits of a repository branch.
+ *
+ * Doc: https://docs.gitlab.com/ee/api/commits.html#list-repository-commits
+ */
 func getCommits(gitlabToken string, projectName string, commitName string) (error, []Commit) {
 
    projectName = url.QueryEscape(projectName)
@@ -168,7 +187,7 @@ func getCommits(gitlabToken string, projectName string, commitName string) (erro
    // Build the request
    req, err := http.NewRequest("GET", url, nil)
    if err != nil {
-      log.Fatal("NewRequest: ", err)
+      log.Println("NewRequest: ", err)
       return err, nil
    }
 
@@ -178,7 +197,7 @@ func getCommits(gitlabToken string, projectName string, commitName string) (erro
    // Send an HTTP request and returns an HTTP response
    resp, err := client.Do(req)
    if err != nil {
-      log.Fatal("Do: ", err)
+      log.Println("Do: ", err)
       return err, nil
    }
 
@@ -186,16 +205,17 @@ func getCommits(gitlabToken string, projectName string, commitName string) (erro
    defer resp.Body.Close()
 
    // Fill the record with the data from the JSON
-   var record []Commit
+   var commits []Commit
 
    // Use json.Decode for reading streams of JSON data
-   if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
+   if err := json.NewDecoder(resp.Body).Decode(&commits); err != nil {
       log.Println(err)
       return err, nil
    }
 
-   return nil, record
+   return nil, commits
 }
+
 
 func main() {
 
@@ -214,7 +234,7 @@ func main() {
 
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   // Get all the merged requests from the GitLab project
+   // Get all the merged requests from a GitLab project
    err, mergedRequests := getMergedRequests(gitlabToken, projectName)
    if err != nil {
       log.Println("Error: can't get the merged requests [", err, "]")
@@ -231,7 +251,7 @@ func main() {
 
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   // Get all the branches from the GitLab project
+   // Get all the branches from a GitLab project
    err, branches := getBranches(gitlabToken, projectName)
    if err != nil {
       log.Println("Error: can't get the branches [", err, "]")
