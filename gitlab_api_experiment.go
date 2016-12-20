@@ -69,11 +69,22 @@ type Branch struct {
    DevelopersCanMerge bool `json:"developers_can_merge"`
 }
 
+
+type Commit struct {
+   ID string `json:"id"`
+   ShortID string `json:"short_id"`
+   Title string `json:"title"`
+   AuthorName string `json:"author_name"`
+   AuthorEmail string `json:"author_email"`
+   CreatedAt time.Time `json:"created_at"`
+   Message string `json:"message"`
+}
+
 func getMergedRequests(gitlabToken string, projectName string) (error, []MergeRequest) {
 
    projectName = url.QueryEscape(projectName)
 
-   url := fmt.Sprintf("http://www.gitlab.com/api/v3/projects/%s/merge_requests?state=merged&private_token=%s", projectName, gitlabToken)
+   url := fmt.Sprintf("http://www.gitlab.com/api/v3/projects/%s/merge_requests?state=opened&private_token=%s", projectName, gitlabToken)
 
    // Build the request
    req, err := http.NewRequest("GET", url, nil)
@@ -145,6 +156,47 @@ func getBranches(gitlabToken string, projectName string) (error, []Branch) {
    return nil, record
 }
 
+func getCommits(gitlabToken string, projectName string, commitName string) (error, []Commit) {
+
+   projectName = url.QueryEscape(projectName)
+
+   commitName = url.QueryEscape(commitName)
+
+   url := fmt.Sprintf("http://www.gitlab.com/api/v3/projects/%s/repository/commits?ref_name=%s&private_token=%s", 
+      projectName, commitName, gitlabToken)
+
+   // Build the request
+   req, err := http.NewRequest("GET", url, nil)
+   if err != nil {
+      log.Fatal("NewRequest: ", err)
+      return err, nil
+   }
+
+   // Create a HTTP Client for control over HTTP client headers, redirect policy, and other settings.
+   client := &http.Client{}
+
+   // Send an HTTP request and returns an HTTP response
+   resp, err := client.Do(req)
+   if err != nil {
+      log.Fatal("Do: ", err)
+      return err, nil
+   }
+
+   // Defer the closing of the body
+   defer resp.Body.Close()
+
+   // Fill the record with the data from the JSON
+   var record []Commit
+
+   // Use json.Decode for reading streams of JSON data
+   if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
+      log.Println(err)
+      return err, nil
+   }
+
+   return nil, record
+}
+
 func main() {
 
 	viper.SetConfigName("config")
@@ -158,8 +210,12 @@ func main() {
 
 	gitlabToken := viper.GetString("connection.token")
 
+   projectName := "gnutls/gnutls"
 
-   err, mergedRequests := getMergedRequests(gitlabToken, "technomancy/bussard")
+
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // Get all the merged requests from the GitLab project
+   err, mergedRequests := getMergedRequests(gitlabToken, projectName)
    if err != nil {
       log.Println("Error: can't get the merged requests [", err, "]")
       return      
@@ -167,10 +223,16 @@ func main() {
 
    for _, r := range mergedRequests {
       fmt.Println("merged requests title = ", r.Title)
+      fmt.Println("                status = ", r.State)
+      fmt.Println("                created at = ", r.CreatedAt)
+      fmt.Println("                source branch = ", r.SourceBranch)
+      fmt.Println("                target branch = ", r.TargetBranch)
    }
 
 
-   err, branches := getBranches(gitlabToken, "gnutls/gnutls")
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // Get all the branches from the GitLab project
+   err, branches := getBranches(gitlabToken, projectName)
    if err != nil {
       log.Println("Error: can't get the branches [", err, "]")
       return      
@@ -178,5 +240,31 @@ func main() {
 
    for _, r := range branches {
       fmt.Println("branch name = ", r.Name)
+   }
+
+
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // Get all the commits from a specific branch of the GitLab project
+   err, commits := getCommits(gitlabToken, projectName, "cert-fast-load")
+   if err != nil {
+      log.Println("Error: can't get the commits [", err, "]")
+      return      
+   }
+
+   for _, r := range commits {
+      fmt.Printf("commit date = %s  title = %s  \n", r.CreatedAt, r.Title)
+   }
+
+
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // Get which branch was merged in which branch
+   for _, branch := range branches {
+      for _, mergedRequest := range mergedRequests {
+         fmt.Printf("compare %s vs %s\n", branch.Name, mergedRequest.Title)
+         if branch.Name == mergedRequest.SourceBranch {
+            fmt.Printf("branch '%s' was merged into branch '%s' on %s\n", branch.Name, mergedRequest.TargetBranch, 
+               mergedRequest.UpdatedAt.Format("2006-01-02 15:04"))
+         }
+      }      
    }
 }
