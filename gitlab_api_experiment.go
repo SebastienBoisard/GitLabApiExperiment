@@ -91,7 +91,7 @@ func getMergedRequests(gitlabToken string, projectName string) (error, []MergeRe
 
    projectName = url.QueryEscape(projectName)
 
-   url := fmt.Sprintf("http://www.gitlab.com/api/v3/projects/%s/merge_requests?state=merged&private_token=%s", projectName, gitlabToken)
+   url := fmt.Sprintf("%s/api/v3/projects/%s/merge_requests?state=merged&private_token=%s", gitlabUrl, projectName, gitlabToken)
 
    // Build the request
    req, err := http.NewRequest("GET", url, nil)
@@ -135,7 +135,7 @@ func getBranches(gitlabToken string, projectName string) (error, []Branch) {
 
    projectName = url.QueryEscape(projectName)
 
-   url := fmt.Sprintf("http://www.gitlab.com/api/v3/projects/%s/repository/branches?private_token=%s", projectName, gitlabToken)
+   url := fmt.Sprintf("%s/api/v3/projects/%s/repository/branches?private_token=%s", gitlabUrl, projectName, gitlabToken)
 
    // Build the request
    req, err := http.NewRequest("GET", url, nil)
@@ -181,8 +181,8 @@ func getCommits(gitlabToken string, projectName string, commitName string) (erro
 
    commitName = url.QueryEscape(commitName)
 
-   url := fmt.Sprintf("http://www.gitlab.com/api/v3/projects/%s/repository/commits?ref_name=%s&private_token=%s", 
-      projectName, commitName, gitlabToken)
+   url := fmt.Sprintf("%s/api/v3/projects/%s/repository/commits?ref_name=%s&private_token=%s", 
+      gitlabUrl, projectName, commitName, gitlabToken)
 
    // Build the request
    req, err := http.NewRequest("GET", url, nil)
@@ -216,6 +216,7 @@ func getCommits(gitlabToken string, projectName string, commitName string) (erro
    return nil, commits
 }
 
+var gitlabUrl string
 
 func main() {
 
@@ -228,9 +229,10 @@ func main() {
 		return
 	}
 
-	gitlabToken := viper.GetString("connection.token")
+	gitlabToken := viper.GetString("gitlab.token")
+   gitlabUrl = viper.GetString("gitlab.url")
+   projectName := viper.GetString("project.name")
 
-   projectName := "gnutls/gnutls"
 
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -248,7 +250,7 @@ func main() {
       fmt.Println("                source branch = ", r.SourceBranch)
       fmt.Println("                target branch = ", r.TargetBranch)
    }
-
+/*
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // Get all the branches from a GitLab project
@@ -287,4 +289,5 @@ func main() {
          }
       }      
    }
+*/   
 }
