@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+	"flag"
 )
 
 // Used https://mholt.github.io/json-to-go/
@@ -90,10 +91,10 @@ func getMergedRequests(gitlabToken string, gitlabUrl string, projectName string)
 
 	projectName = url.QueryEscape(projectName)
 
-	url := fmt.Sprintf("%s/api/v3/projects/%s/merge_requests?state=merged&private_token=%s", gitlabUrl, projectName, gitlabToken)
+	restUrl := fmt.Sprintf("%s/api/v3/projects/%s/merge_requests?state=merged&private_token=%s", gitlabUrl, projectName, gitlabToken)
 
 	// Build the request
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", restUrl, nil)
 	if err != nil {
 		log.Println("NewRequest: ", err)
 		return err, nil
@@ -133,10 +134,10 @@ func getBranches(gitlabToken string, gitlabUrl string, projectName string) (erro
 
 	projectName = url.QueryEscape(projectName)
 
-	url := fmt.Sprintf("%s/api/v3/projects/%s/repository/branches?private_token=%s", gitlabUrl, projectName, gitlabToken)
+	restUrl := fmt.Sprintf("%s/api/v3/projects/%s/repository/branches?private_token=%s", gitlabUrl, projectName, gitlabToken)
 
 	// Build the request
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", restUrl, nil)
 	if err != nil {
 		log.Println("NewRequest: ", err)
 		return err, nil
@@ -178,11 +179,11 @@ func getCommits(gitlabToken string, gitlabUrl string, projectName string, commit
 
 	commitName = url.QueryEscape(commitName)
 
-	url := fmt.Sprintf("%s/api/v3/projects/%s/repository/commits?ref_name=%s&private_token=%s",
+	restUrl := fmt.Sprintf("%s/api/v3/projects/%s/repository/commits?ref_name=%s&private_token=%s",
 		gitlabUrl, projectName, commitName, gitlabToken)
 
 	// Build the request
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", restUrl, nil)
 	if err != nil {
 		log.Println("NewRequest: ", err)
 		return err, nil
@@ -213,6 +214,8 @@ func getCommits(gitlabToken string, gitlabUrl string, projectName string, commit
 	return nil, commits
 }
 
+
+
 func main() {
 
 	viper.SetConfigName("config")
@@ -228,46 +231,72 @@ func main() {
 	gitlabUrl := viper.GetString("gitlab.url")
 	projectName := viper.GetString("project.name")
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Get all the merged requests from a GitLab project
-	err, mergedRequests := getMergedRequests(gitlabToken, gitlabUrl, projectName)
-	if err != nil {
-		log.Println("Error: can't get the merged requests [", err, "]")
+	var commandName string
+	flag.StringVar(&commandName, "command_name", "", "the command to execute: merged_requests, all_branches, commits")
+
+	flag.Parse()
+
+	if commandName == "" {
+		fmt.Println("Error: command_name is missing")
+		fmt.Println("")
+		fmt.Println("Usage:")
+		flag.PrintDefaults()
 		return
 	}
 
-	for _, r := range mergedRequests {
-		fmt.Println("merged requests title = ", r.Title)
-		fmt.Println("                status = ", r.State)
-		fmt.Println("                created at = ", r.CreatedAt)
-		fmt.Println("                source branch = ", r.SourceBranch)
-		fmt.Println("                target branch = ", r.TargetBranch)
+	switch commandName {
+	case "merged_requests":
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// Get all the merged requests from a GitLab project
+		err, mergedRequests := getMergedRequests(gitlabToken, gitlabUrl, projectName)
+		if err != nil {
+			log.Println("Error: can't get the merged requests [", err, "]")
+			return
+		}
+
+		for _, r := range mergedRequests {
+			fmt.Println("merged requests title = ", r.Title)
+			fmt.Println("                status = ", r.State)
+			fmt.Println("                created at = ", r.CreatedAt)
+			fmt.Println("                source branch = ", r.SourceBranch)
+			fmt.Println("                target branch = ", r.TargetBranch)
+		}
+
+	case "all_branches":
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// Get all the branches from a GitLab project
+		err, branches := getBranches(gitlabToken, gitlabUrl, projectName)
+		if err != nil {
+			log.Println("Error: can't get the branches [", err, "]")
+			return
+		}
+
+		for _, r := range branches {
+			fmt.Println("branch name = ", r.Name)
+		}
+
+	case "commits":
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// Get all the commits from a specific branch of the GitLab project
+		err, commits := getCommits(gitlabToken, gitlabUrl, projectName, "cert-fast-load")
+		if err != nil {
+			log.Println("Error: can't get the commits [", err, "]")
+			return
+		}
+
+		for _, r := range commits {
+			fmt.Printf("commit date = %s  title = %s  \n", r.CreatedAt, r.Title)
+		}
+		
+	default:
+		fmt.Println("Error: unknown command name")
+		fmt.Println("")
+		fmt.Println("Usage:")
+		flag.PrintDefaults()
 	}
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Get all the branches from a GitLab project
-	err, branches := getBranches(gitlabToken, gitlabUrl, projectName)
-	if err != nil {
-		log.Println("Error: can't get the branches [", err, "]")
-		return
-	}
 
-	for _, r := range branches {
-		fmt.Println("branch name = ", r.Name)
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Get all the commits from a specific branch of the GitLab project
-	err, commits := getCommits(gitlabToken, gitlabUrl, projectName, "cert-fast-load")
-	if err != nil {
-		log.Println("Error: can't get the commits [", err, "]")
-		return
-	}
-
-	for _, r := range commits {
-		fmt.Printf("commit date = %s  title = %s  \n", r.CreatedAt, r.Title)
-	}
-
+/*
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Get which branch was merged in which branch
 	for _, branch := range branches {
@@ -279,4 +308,5 @@ func main() {
 			}
 		}
 	}
+*/
 }
