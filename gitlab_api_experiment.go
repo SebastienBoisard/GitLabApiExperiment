@@ -2,13 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/spf13/viper"
 	"log"
 	"net/http"
 	"net/url"
 	"time"
-	"flag"
 )
 
 // Used https://mholt.github.io/json-to-go/
@@ -26,7 +26,7 @@ type MergeRequest struct {
 	SourceBranch string    `json:"source_branch"`
 	Upvotes      int       `json:"upvotes"`
 	Downvotes    int       `json:"downvotes"`
-	Author struct {
+	Author       struct {
 		Name      string `json:"name"`
 		Username  string `json:"username"`
 		ID        int    `json:"id"`
@@ -54,17 +54,17 @@ type MergeRequest struct {
 
 // Branch contains the branch data
 type Branch struct {
-	Name string `json:"name"`
+	Name   string `json:"name"`
 	Commit struct {
-		ID             string `json:"id"`
-		Message        string `json:"message"`
-		ParentIds      []string `json:"parent_ids"`
+		ID             string    `json:"id"`
+		Message        string    `json:"message"`
+		ParentIds      []string  `json:"parent_ids"`
 		AuthoredDate   time.Time `json:"authored_date"`
-		AuthorName     string `json:"author_name"`
-		AuthorEmail    string `json:"author_email"`
+		AuthorName     string    `json:"author_name"`
+		AuthorEmail    string    `json:"author_email"`
 		CommittedDate  time.Time `json:"committed_date"`
-		CommitterName  string `json:"committer_name"`
-		CommitterEmail string `json:"committer_email"`
+		CommitterName  string    `json:"committer_name"`
+		CommitterEmail string    `json:"committer_email"`
 	} `json:"commit"`
 	Protected          bool `json:"protected"`
 	DevelopersCanPush  bool `json:"developers_can_push"`
@@ -73,13 +73,13 @@ type Branch struct {
 
 // Commit contains the commit data
 type Commit struct {
-	ID          string `json:"id"`
-	ShortID     string `json:"short_id"`
-	Title       string `json:"title"`
-	AuthorName  string `json:"author_name"`
-	AuthorEmail string `json:"author_email"`
+	ID          string    `json:"id"`
+	ShortID     string    `json:"short_id"`
+	Title       string    `json:"title"`
+	AuthorName  string    `json:"author_name"`
+	AuthorEmail string    `json:"author_email"`
 	CreatedAt   time.Time `json:"created_at"`
-	Message     string `json:"message"`
+	Message     string    `json:"message"`
 }
 
 /**
@@ -214,8 +214,6 @@ func getCommits(gitlabToken string, gitlabUrl string, projectName string, commit
 	return nil, commits
 }
 
-
-
 func main() {
 
 	viper.SetConfigName("config")
@@ -287,7 +285,7 @@ func main() {
 		for _, r := range commits {
 			fmt.Printf("commit date = %s  title = %s  \n", r.CreatedAt, r.Title)
 		}
-		
+
 	default:
 		fmt.Println("Error: unknown command name")
 		fmt.Println("")
@@ -295,18 +293,17 @@ func main() {
 		flag.PrintDefaults()
 	}
 
-
-/*
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Get which branch was merged in which branch
-	for _, branch := range branches {
-		for _, mergedRequest := range mergedRequests {
-			fmt.Printf("compare %s vs %s\n", branch.Name, mergedRequest.Title)
-			if branch.Name == mergedRequest.SourceBranch {
-				fmt.Printf("branch '%s' was merged into branch '%s' on %s\n", branch.Name, mergedRequest.TargetBranch,
-					mergedRequest.UpdatedAt.Format("2006-01-02 15:04"))
+	/*
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// Get which branch was merged in which branch
+		for _, branch := range branches {
+			for _, mergedRequest := range mergedRequests {
+				fmt.Printf("compare %s vs %s\n", branch.Name, mergedRequest.Title)
+				if branch.Name == mergedRequest.SourceBranch {
+					fmt.Printf("branch '%s' was merged into branch '%s' on %s\n", branch.Name, mergedRequest.TargetBranch,
+						mergedRequest.UpdatedAt.Format("2006-01-02 15:04"))
+				}
 			}
 		}
-	}
-*/
+	*/
 }
