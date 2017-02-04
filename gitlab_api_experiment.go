@@ -91,7 +91,7 @@ func getMergedRequests(gitlabToken string, gitlabUrl string, projectName string)
 
 	projectName = url.QueryEscape(projectName)
 
-	restUrl := fmt.Sprintf("%s/api/v3/projects/%s/merge_requests?state=merged&private_token=%s", gitlabUrl, projectName, gitlabToken)
+	restUrl := fmt.Sprintf("%s/api/v3/projects/%s/merge_requests?state=merged", gitlabUrl, projectName)
 
 	// Build the request
 	req, err := http.NewRequest("GET", restUrl, nil)
@@ -99,6 +99,7 @@ func getMergedRequests(gitlabToken string, gitlabUrl string, projectName string)
 		log.Println("NewRequest: ", err)
 		return nil, err
 	}
+	req.Header.Set("PRIVATE-TOKEN", gitlabToken)
 
 	// Create a HTTP Client for control over HTTP client headers, redirect policy, and other settings.
 	client := &http.Client{}
@@ -134,7 +135,7 @@ func getBranches(gitlabToken string, gitlabUrl string, projectName string) ([]Br
 
 	projectName = url.QueryEscape(projectName)
 
-	restUrl := fmt.Sprintf("%s/api/v3/projects/%s/repository/branches?private_token=%s", gitlabUrl, projectName, gitlabToken)
+	restUrl := fmt.Sprintf("%s/api/v3/projects/%s/repository/branches", gitlabUrl, projectName)
 
 	// Build the request
 	req, err := http.NewRequest("GET", restUrl, nil)
@@ -142,6 +143,7 @@ func getBranches(gitlabToken string, gitlabUrl string, projectName string) ([]Br
 		log.Println("NewRequest: ", err)
 		return nil, err
 	}
+	req.Header.Set("PRIVATE-TOKEN", gitlabToken)
 
 	// Create a HTTP Client for control over HTTP client headers, redirect policy, and other settings.
 	client := &http.Client{}
@@ -179,8 +181,8 @@ func getCommits(gitlabToken string, gitlabUrl string, projectName string, commit
 
 	commitName = url.QueryEscape(commitName)
 
-	restUrl := fmt.Sprintf("%s/api/v3/projects/%s/repository/commits?ref_name=%s&private_token=%s",
-		gitlabUrl, projectName, commitName, gitlabToken)
+	restUrl := fmt.Sprintf("%s/api/v3/projects/%s/repository/commits?ref_name=%s",
+		gitlabUrl, projectName, commitName)
 
 	// Build the request
 	req, err := http.NewRequest("GET", restUrl, nil)
@@ -188,6 +190,7 @@ func getCommits(gitlabToken string, gitlabUrl string, projectName string, commit
 		log.Println("NewRequest: ", err)
 		return nil, err
 	}
+	req.Header.Set("PRIVATE-TOKEN", gitlabToken)
 
 	// Create a HTTP Client for control over HTTP client headers, redirect policy, and other settings.
 	client := &http.Client{}
