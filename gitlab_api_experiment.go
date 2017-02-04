@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-// Used https://mholt.github.io/json-to-go/
 // MergeRequest contains the Merge Request data
+// Used https://mholt.github.io/json-to-go/
 type MergeRequest struct {
 	ID           int       `json:"id"`
 	Iid          int       `json:"iid"`
@@ -87,7 +87,7 @@ type Commit struct {
  *
  * Doc: https://docs.gitlab.com/ee/api/merge_requests.html#list-merge-requests
  */
-func getMergedRequests(gitlabToken string, gitlabUrl string, projectName string) (error, []MergeRequest) {
+func getMergedRequests(gitlabToken string, gitlabUrl string, projectName string) ([]MergeRequest, error) {
 
 	projectName = url.QueryEscape(projectName)
 
@@ -97,7 +97,7 @@ func getMergedRequests(gitlabToken string, gitlabUrl string, projectName string)
 	req, err := http.NewRequest("GET", restUrl, nil)
 	if err != nil {
 		log.Println("NewRequest: ", err)
-		return err, nil
+		return nil, err
 	}
 
 	// Create a HTTP Client for control over HTTP client headers, redirect policy, and other settings.
@@ -107,7 +107,7 @@ func getMergedRequests(gitlabToken string, gitlabUrl string, projectName string)
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Println("Do: ", err)
-		return err, nil
+		return nil, err
 	}
 
 	// Defer the closing of the body
@@ -119,10 +119,10 @@ func getMergedRequests(gitlabToken string, gitlabUrl string, projectName string)
 	// Use json.Decode for reading streams of JSON data
 	if err := json.NewDecoder(resp.Body).Decode(&mergedRequests); err != nil {
 		log.Println(err)
-		return err, nil
+		return nil, err
 	}
 
-	return nil, mergedRequests
+	return mergedRequests, nil
 }
 
 /**
@@ -130,7 +130,7 @@ func getMergedRequests(gitlabToken string, gitlabUrl string, projectName string)
  *
  * Doc: https://docs.gitlab.com/ee/api/branches.html#list-repository-branches
  */
-func getBranches(gitlabToken string, gitlabUrl string, projectName string) (error, []Branch) {
+func getBranches(gitlabToken string, gitlabUrl string, projectName string) ([]Branch, error) {
 
 	projectName = url.QueryEscape(projectName)
 
@@ -140,7 +140,7 @@ func getBranches(gitlabToken string, gitlabUrl string, projectName string) (erro
 	req, err := http.NewRequest("GET", restUrl, nil)
 	if err != nil {
 		log.Println("NewRequest: ", err)
-		return err, nil
+		return nil, err
 	}
 
 	// Create a HTTP Client for control over HTTP client headers, redirect policy, and other settings.
@@ -150,7 +150,7 @@ func getBranches(gitlabToken string, gitlabUrl string, projectName string) (erro
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Println("Do: ", err)
-		return err, nil
+		return nil, err
 	}
 
 	// Defer the closing of the body
@@ -162,10 +162,10 @@ func getBranches(gitlabToken string, gitlabUrl string, projectName string) (erro
 	// Use json.Decode for reading streams of JSON data
 	if err := json.NewDecoder(resp.Body).Decode(&branches); err != nil {
 		log.Println(err)
-		return err, nil
+		return nil, err
 	}
 
-	return nil, branches
+	return branches, nil
 }
 
 /**
@@ -173,7 +173,7 @@ func getBranches(gitlabToken string, gitlabUrl string, projectName string) (erro
  *
  * Doc: https://docs.gitlab.com/ee/api/commits.html#list-repository-commits
  */
-func getCommits(gitlabToken string, gitlabUrl string, projectName string, commitName string) (error, []Commit) {
+func getCommits(gitlabToken string, gitlabUrl string, projectName string, commitName string) ([]Commit, error) {
 
 	projectName = url.QueryEscape(projectName)
 
@@ -186,7 +186,7 @@ func getCommits(gitlabToken string, gitlabUrl string, projectName string, commit
 	req, err := http.NewRequest("GET", restUrl, nil)
 	if err != nil {
 		log.Println("NewRequest: ", err)
-		return err, nil
+		return nil, err
 	}
 
 	// Create a HTTP Client for control over HTTP client headers, redirect policy, and other settings.
@@ -196,7 +196,7 @@ func getCommits(gitlabToken string, gitlabUrl string, projectName string, commit
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Println("Do: ", err)
-		return err, nil
+		return nil, err
 	}
 
 	// Defer the closing of the body
@@ -208,10 +208,10 @@ func getCommits(gitlabToken string, gitlabUrl string, projectName string, commit
 	// Use json.Decode for reading streams of JSON data
 	if err := json.NewDecoder(resp.Body).Decode(&commits); err != nil {
 		log.Println(err)
-		return err, nil
+		return nil, err
 	}
 
-	return nil, commits
+	return commits, nil
 }
 
 func main() {
@@ -246,7 +246,7 @@ func main() {
 	case "merged_requests":
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Get all the merged requests from a GitLab project
-		err, mergedRequests := getMergedRequests(gitlabToken, gitlabUrl, projectName)
+		mergedRequests, err := getMergedRequests(gitlabToken, gitlabUrl, projectName)
 		if err != nil {
 			log.Println("Error: can't get the merged requests [", err, "]")
 			return
@@ -263,7 +263,7 @@ func main() {
 	case "all_branches":
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Get all the branches from a GitLab project
-		err, branches := getBranches(gitlabToken, gitlabUrl, projectName)
+		branches, err := getBranches(gitlabToken, gitlabUrl, projectName)
 		if err != nil {
 			log.Println("Error: can't get the branches [", err, "]")
 			return
@@ -276,7 +276,7 @@ func main() {
 	case "commits":
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Get all the commits from a specific branch of the GitLab project
-		err, commits := getCommits(gitlabToken, gitlabUrl, projectName, "cert-fast-load")
+		commits, err := getCommits(gitlabToken, gitlabUrl, projectName, "cert-fast-load")
 		if err != nil {
 			log.Println("Error: can't get the commits [", err, "]")
 			return
@@ -292,18 +292,4 @@ func main() {
 		fmt.Println("Usage:")
 		flag.PrintDefaults()
 	}
-
-	/*
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// Get which branch was merged in which branch
-		for _, branch := range branches {
-			for _, mergedRequest := range mergedRequests {
-				fmt.Printf("compare %s vs %s\n", branch.Name, mergedRequest.Title)
-				if branch.Name == mergedRequest.SourceBranch {
-					fmt.Printf("branch '%s' was merged into branch '%s' on %s\n", branch.Name, mergedRequest.TargetBranch,
-						mergedRequest.UpdatedAt.Format("2006-01-02 15:04"))
-				}
-			}
-		}
-	*/
 }
