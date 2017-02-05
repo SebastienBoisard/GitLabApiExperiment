@@ -1,12 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"time"
-	"encoding/json"
 )
 
 // Branch contains the branch data

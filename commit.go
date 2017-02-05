@@ -1,12 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"time"
-	"encoding/json"
 )
 
 // Commit contains the commit data
