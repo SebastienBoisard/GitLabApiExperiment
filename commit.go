@@ -1,4 +1,4 @@
-package main
+package GitLabApiExperiment
 
 import (
 	"encoding/json"
@@ -25,7 +25,7 @@ type Commit struct {
  *
  * Doc: https://docs.gitlab.com/ee/api/commits.html#list-repository-commits
  */
-func getCommits(gitlabToken string, gitlabUrl string, projectName string, commitName string) ([]Commit, error) {
+func GetCommits(gitlabToken string, gitlabUrl string, projectName string, commitName string) ([]Commit, error) {
 
 	projectName = url.QueryEscape(projectName)
 

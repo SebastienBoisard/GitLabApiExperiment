@@ -3,18 +3,21 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/SebastienBoisard/GitLabApiExperiment"
 	"github.com/spf13/viper"
 	"log"
 )
 
 func main() {
 
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
 
 	if err != nil {
-		log.Println("Error: no configuration file not found")
+		log.Println("Error: configuration file not found")
 		return
 	}
 
@@ -39,7 +42,7 @@ func main() {
 	case "merged_requests":
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Get all the merged requests from a GitLab project
-		mergedRequests, err := getMergedRequests(gitlabToken, gitlabUrl, projectName)
+		mergedRequests, err := GitLabApiExperiment.GetMergedRequests(gitlabToken, gitlabUrl, projectName)
 		if err != nil {
 			log.Println("Error: can't get the merged requests [", err, "]")
 			return
@@ -56,7 +59,7 @@ func main() {
 	case "all_branches":
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Get all the branches from a GitLab project
-		branches, err := getBranches(gitlabToken, gitlabUrl, projectName)
+		branches, err := GitLabApiExperiment.GetBranches(gitlabToken, gitlabUrl, projectName)
 		if err != nil {
 			log.Println("Error: can't get the branches [", err, "]")
 			return
@@ -69,7 +72,7 @@ func main() {
 	case "commits":
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Get all the commits from a specific branch of the GitLab project
-		commits, err := getCommits(gitlabToken, gitlabUrl, projectName, "cert-fast-load")
+		commits, err := GitLabApiExperiment.GetCommits(gitlabToken, gitlabUrl, projectName, "cert-fast-load")
 		if err != nil {
 			log.Println("Error: can't get the commits [", err, "]")
 			return

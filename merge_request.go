@@ -1,4 +1,4 @@
-package main
+package GitLabApiExperiment
 
 import (
 	"encoding/json"
@@ -55,7 +55,7 @@ type MergeRequest struct {
  *
  * Doc: https://docs.gitlab.com/ee/api/merge_requests.html#list-merge-requests
  */
-func getMergedRequests(gitlabToken string, gitlabUrl string, projectName string) ([]MergeRequest, error) {
+func GetMergedRequests(gitlabToken string, gitlabUrl string, projectName string) ([]MergeRequest, error) {
 
 	projectName = url.QueryEscape(projectName)
 

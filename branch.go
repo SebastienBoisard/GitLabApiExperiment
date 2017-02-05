@@ -1,9 +1,9 @@
-package main
+package GitLabApiExperiment
 
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+ 	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -23,6 +23,7 @@ type Branch struct {
 		CommitterName  string    `json:"committer_name"`
 		CommitterEmail string    `json:"committer_email"`
 	} `json:"commit"`
+	Merged             bool `json:"merged"`
 	Protected          bool `json:"protected"`
 	DevelopersCanPush  bool `json:"developers_can_push"`
 	DevelopersCanMerge bool `json:"developers_can_merge"`
@@ -33,7 +34,7 @@ type Branch struct {
  *
  * Doc: https://docs.gitlab.com/ee/api/branches.html#list-repository-branches
  */
-func getBranches(gitlabToken string, gitlabUrl string, projectName string) ([]Branch, error) {
+func GetBranches(gitlabToken string, gitlabUrl string, projectName string) ([]Branch, error) {
 
 	projectName = url.QueryEscape(projectName)
 

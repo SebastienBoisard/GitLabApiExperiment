@@ -1,0 +1,6 @@
+[gitlab]
+token = "xxxxxxxxxxxxxxxxx" # GitLab access token
+url = "http://www.gitlab.com"
+
+[project]
+name = "xxx/xxxx" # The Gitlab project name

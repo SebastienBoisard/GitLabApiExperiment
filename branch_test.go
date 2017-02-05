@@ -1,4 +1,4 @@
-package main
+package GitLabApiExperiment
 
 import (
 	"fmt"
@@ -42,7 +42,7 @@ func TestGetBranches(t *testing.T) {
 
 	expectedBranches := []Branch{{Name: "master"}}
 
-	returnedBranches, err := getBranches("gitlab_token", server.URL, "test_project")
+	returnedBranches, err := GetBranches("gitlab_token", server.URL, "test_project")
 	if err != nil {
 		t.Errorf("getBranches returned error: %v", err)
 	}
